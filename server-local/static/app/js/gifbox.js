@@ -2,7 +2,37 @@
 
 class GifBox {
   
+
   constructor(){
+    this._clock = null;
+    this._config = null;
+  }
+
+
+  _loadJson( url, callback ){
+    let request = new XMLHttpRequest();  
+    
+    request.open(
+        'GET',
+        url,
+        true
+    );  
+
+    request.responseType = 'json';
+
+    request.onreadystatechange = function (oEvent) {  
+      if (request.readyState === 4) {  
+        if (request.status === 200) {  
+          callback( request.response );
+        } else {  
+          console.log( "Error", request.statusText );  
+        }  
+      }  
+    };  
+
+    request.send();  
+
+    return request;
   }
 
 
@@ -28,6 +58,7 @@ class GifBox {
 
   } 
 
+
   resizeLoadedImage( image ){
     
     let pn = image.parentNode;
@@ -40,9 +71,14 @@ class GifBox {
     }
   }
 
+
   onNextImageLoaded(){
     this.prepareLoadedImage();
     this.loadNextImage();
+    if( this._imageLoadedCallback ){
+      this._imageLoadedCallback();
+      this._imageLoadedCallback = null;
+    }
   }
 
 
@@ -79,37 +115,66 @@ class GifBox {
   loadNextImageData(){
     
     let thisRef = this;
-
-    let request = new XMLHttpRequest();  
     
-    request.open(
-        'GET',
-        'http://localhost:5000/api/media/next',
-        true
-    );  
-
-    request.responseType = 'json';
-
-    request.onreadystatechange = function (oEvent) {  
-      if (request.readyState === 4) {  
-        if (request.status === 200) {  
-          thisRef.onNextImageData( request.response )
-        } else {  
-          console.log( "Error", request.statusText );  
-        }  
-      }  
-    };  
-
-    request.send();  
+    this._loadJson(
+      '/api/media/next',
+      function( data ){
+        thisRef.onNextImageData( data );
+      }
+    )
       
   }
 
 
-  run(){
+  loadConfig( callback ){
+    let thisRef = this;
+    this._loadJson(
+      '/api/config',
+      function( data ){
+        thisRef.onConfigLoaded( data, callback )
+      }
+    )
+  }
+  
+
+  onConfigLoaded( data, callback ) {
+    this._config = data;
+    if( callback ){
+      callback();
+    }
+  }
+
+
+  initClock() {
+    if( this._config.showClock ){
+      if( !this._clock ){
+        const c = new Clock( "images/clock/digit-" );
+        c.run();
+        this._clock = c;
+      }
+    }  
+  }
+
+
+  main(){
+    // main entrypoint, call this when e.g. config load has finished
     let img = document.getElementById("imgLast");
     this.resizeLoadedImage( img );
-
+    
+    const thisRef = this;
+    this._imageLoadedCallback = function(){
+      thisRef.initClock();
+    }
     this.loadNextImage();
+  }
+
+
+  init(){
+    // bootstrap gifbox, load config before doing anything else
+    const thisRef = this;
+    this.loadConfig( function(){
+      thisRef.main();
+    });
   }
 
 }
@@ -117,11 +182,7 @@ class GifBox {
 
 window.onload = function() {
     
-    var gifbox = new GifBox();
-    gifbox.run();
-
-    //var clock = new Clock( "images/clock/lcd-" );
-    var clock = new Clock( "images/clock/digit-" );
-    clock.run();
+    const gifbox = new GifBox();
+    gifbox.init();
 
 }

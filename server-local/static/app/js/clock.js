@@ -48,7 +48,11 @@ class Clock {
 
 
   run(){
-    var thisRef = this;
+
+    const clock = document.getElementById( "clock" );
+    clock.classList.remove( "loading" );
+
+    const thisRef = this;
     this._interval = window.setInterval( function(){
         thisRef.update();
     }, 1000/12 );

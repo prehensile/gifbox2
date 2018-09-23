@@ -1,6 +1,7 @@
 import os, sys
 import random
 import logging
+import json
 
 from flask import Flask, jsonify, send_from_directory, url_for
 
@@ -22,6 +23,15 @@ def media_dir():
     media_path = os.path.realpath( media_path )
     print( media_path )
     return media_path
+
+
+@app.route('/api/config')
+def config():
+    config = None
+    with open( "config/config.json" ) as fp:
+        config = fp.read()
+    config = json.loads( config )
+    return jsonify( config )
 
 
 @app.route('/api/media/next')
