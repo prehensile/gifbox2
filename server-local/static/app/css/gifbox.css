@@ -1,0 +1,48 @@
+body {
+    overflow: hidden;
+
+/*    display: flex;
+    align-items: center;*/
+}
+
+.media {
+    /*width: 100%;*/
+}
+
+.loading {
+    visibility: hidden;
+    display: none;
+}
+
+.fitHeight {
+    height: 100%;   
+}
+
+.fitWidth {
+    width: 100%;
+}
+
+.flex-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#clock {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+}
+
+#clock .digit {
+    /*filter: invert(50%);
+    mix-blend-mode: difference;*/
+    margin: 0px 4px;
+}
+
+#images {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    position: absolute;
+}
