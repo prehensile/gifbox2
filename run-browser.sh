@@ -1,2 +1,2 @@
 #/usr/lib/chromium-browser/chromium-browser --start-fullscreen --remote-debugging-port=9222 --user-data-dir=remote-profile --disable-quic --enable-tcp-fast-open --disable-gpu-compositing --noerrdialogs --kiosk http://localhost:5000/index.html
-/usr/lib/chromium-browser/chromium-browser --start-fullscreen --remote-debugging-port=9222 --user-data-dir=remote-profile --disable-quic --enable-tcp-fast-open --noerrdialogs --incognito --kiosk http://localhost:5000/static/app/index.html
+/usr/lib/chromium-browser/chromium-browser --start-fullscreen --remote-debugging-port=9222 --user-data-dir=remote-profile --disable-quic --enable-tcp-fast-open --noerrdialogs --incognito --kiosk http://localhost:5000/static/display/index.html
