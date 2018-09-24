@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="{{ url_for('static', filename='admin/css/bootstrap.min.css') }}">
+    <title>gifbox preferences</title>
+  </head>
+  <body>
+    
+    <div class="container">
+      
+        <h1>gifbox preferences</h1>
+
+      <!-- dropbox status -->
+      <div class="row">
+        <div class="col-md-12">
+          {% if url_dropbox_auth %}
+            <p>⚠️ gifbox is <em>not connected</em> to a Dropbox account.</p>
+            <a href="{{ url_dropbox_auth }}" class="btn btn-primary" role="button" aria-pressed="true">Connect to Dropbox</a>
+          {% else %}
+            ✅ gifbox is connected to Dropbox.
+          {% endif %}
+        </div>
+      </div>
+      
+      <!-- config form -->
+      <div class="row">
+          <div class="col-md-12">
+              <form>
+                  <div class="form-group form-check">
+                    <input type="checkbox" class="form-check-input" id="chkEnableClock">
+                    <label class="form-check-label" for="chkEnableClock">Enable clock</label>
+                  </div>
+                  <button type="submit" class="btn btn-primary">Submit</button>
+                </form>
+          </div>
+      </div>
+
+    </div>
+    
+    <script src="{{ url_for('static', filename='admin/js/bootstrap.min.js') }}"></script>
+  </body>
+</html>
