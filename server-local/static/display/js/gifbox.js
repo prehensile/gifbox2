@@ -9,16 +9,24 @@ class GifBox {
   }
 
 
-  _loadJson( url, callback ){
+  _loadJson( url, callback, params ){
     let request = new XMLHttpRequest();  
     
-    request.open(
-        'GET',
-        url,
-        true
-    );  
+    if( params ){
+      let pairs = [];
+      for (const key in params) {
+        if (params.hasOwnProperty(key)) {
+          pairs.push(
+            key + "=" + encodeURIComponent( params[key] )
+          );
+        }
+      }
+      url = url + "?" + pairs.join("&");
+    }  
 
     request.responseType = 'json';
+
+    request.open( 'GET', url, true );
 
     request.onreadystatechange = function (oEvent) {  
       if (request.readyState === 4) {  
@@ -49,7 +57,7 @@ class GifBox {
     let lastImg = document.getElementById( 'imgLast' );
     
     let nextImg = document.getElementById( 'imgLoading' );
-    this.resizeLoadedImage( nextImg );
+    this.fitImageToContainer( nextImg );
 
     lastImg.parentNode.removeChild( lastImg );
     nextImg.classList.remove( 'loading' );
@@ -59,7 +67,7 @@ class GifBox {
   } 
 
 
-  resizeLoadedImage( image ){
+  fitImageToContainer( image ){
     
     let pn = image.parentNode;
     let imgAspectRatio = image.naturalHeight / image.naturalWidth;
@@ -98,7 +106,9 @@ class GifBox {
 
 
   onNextImageData( imageData ){
-        
+    
+    this._lastImageData = imageData;
+
     let nextImg = this.spawnNextImage(
         imageData.mediaItem.url
     );
@@ -116,11 +126,19 @@ class GifBox {
     
     let thisRef = this;
     
+    let params = null;
+    if( this._lastImageData ){
+      params = {
+        "since" : this._lastImageData[ "timestamp" ]
+      }
+    }
+
     this._loadJson(
       '/api/media/next',
       function( data ){
         thisRef.onNextImageData( data );
-      }
+      },
+      params
     )
       
   }
@@ -159,7 +177,7 @@ class GifBox {
   main(){
     // main entrypoint, call this when e.g. config load has finished
     let img = document.getElementById("imgLast");
-    this.resizeLoadedImage( img );
+    this.fitImageToContainer( img );
     
     const thisRef = this;
     this._imageLoadedCallback = function(){
