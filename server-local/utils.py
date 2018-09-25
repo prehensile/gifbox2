@@ -1,14 +1,19 @@
+import os
 import json 
 import logging
 import logging.handlers
 import sys
 
 
-def load_json( path ):
+def load_json( path, default_content=None ):
     j = None
-    with open( path ) as fp:
+    if os.path.exists( path ):
+        with open( path ) as fp:
+            j = json.loads( j )
         j = fp.read()
-    return json.loads( j )
+    elif default_content is not None:
+        dump_json( path, default_content )
+    return j
 
 
 def set_json( path, key, value ):
