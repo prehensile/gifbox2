@@ -187,6 +187,8 @@ class DropboxClient( object ):
         if self._run_flag and self._thread:
             self._run_flag.set()
             self._thread.join()
+            self._run_flag = None
+            self._thread = None
 
 
 def main():
