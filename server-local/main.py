@@ -33,9 +33,9 @@ _PTH_FLASK_CONFIG = "config/flask.json"
 _KEY_SESSION = "secret_key"
 def get_session_key():
     sc = None
-    flask_config = utils.load_json( _PTH_FLASK_CONFIG )
+    flask_config = utils.load_json( _PTH_FLASK_CONFIG, default_content={} )
     if _KEY_SESSION not in flask_config:
-        sc = "%s" % os.urandom(16)
+        sc = "%r" % os.urandom(16)
         utils.set_json(
             _PTH_FLASK_CONFIG,
             _KEY_SESSION,
@@ -59,7 +59,7 @@ _CONFIG_KEY_DROPBOX_CONFIGURED = 'dropboxConfigured'
 def get_config( key=None ):
     global _CONFIG
     if _CONFIG is None:
-        _CONFIG = utils.load_json( _PTH_CONFIG )
+        _CONFIG = utils.load_json( _PTH_CONFIG, default_content={} )
     if key:
         return _CONFIG[ key ]
     return _CONFIG
@@ -94,7 +94,7 @@ _DB_KEY_ACCESS_TOKEN = "access_token"
 
 def init_dropbox():
     global _DB_CLIENT
-    j = utils.load_json( _PTH_DB_CLIENT_CONFIG )
+    j = utils.load_json( _PTH_DB_CLIENT_CONFIG, default_content={} )
     token = j[ _DB_KEY_ACCESS_TOKEN ]
     _DB_CLIENT = dropboxclient.DropboxClient(
         access_token = token,
