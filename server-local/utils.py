@@ -9,10 +9,10 @@ def load_json( path, default_content=None ):
     j = None
     if os.path.exists( path ):
         with open( path ) as fp:
-            j = json.loads( j )
-        j = fp.read()
+            j = json.load( fp )
     elif default_content is not None:
         dump_json( path, default_content )
+        return default_content
     return j
 
 
