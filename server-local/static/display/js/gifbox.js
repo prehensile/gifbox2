@@ -82,7 +82,7 @@ class GifBox {
 
   onNextImageLoaded(){
     this.prepareLoadedImage();
-    this.loadNextImage();
+    //this.loadNextImage();
     if( this._imageLoadedCallback ){
       this._imageLoadedCallback();
       this._imageLoadedCallback = null;
@@ -173,26 +173,34 @@ class GifBox {
     }  
   }
 
-
-  main(){
-    // main entrypoint, call this when e.g. config load has finished
-    let img = document.getElementById("imgLast");
-    this.fitImageToContainer( img );
+  postIntro(){
     
     const thisRef = this;
-    this._imageLoadedCallback = function(){
+
+    // load config, then do the next thing
+    this.loadConfig( function(){
+      debugger;
       thisRef.initClock();
-    }
-    this.loadNextImage();
+      thisRef._clock.onClockChange = function(){
+        console.log( "onClockChange" );
+        thisRef.loadNextImageData();
+      };
+      thisRef.loadNextImageData();
+    });
   }
 
-
   init(){
-    // bootstrap gifbox, load config before doing anything else
+    
+    // bootstrap gifbox
+
+    let img = document.getElementById("imgLast");
+    this.fitImageToContainer( img );
+
     const thisRef = this;
-    this.loadConfig( function(){
-      thisRef.main();
-    });
+    window.setTimeout( function(){
+      thisRef.postIntro();
+    },8000);
+    
   }
 
 }

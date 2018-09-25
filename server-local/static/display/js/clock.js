@@ -3,6 +3,7 @@ class Clock {
   constructor( imageRoot ){
     this._lastTimeString = "";
     this._imageRoot = imageRoot;
+    this.onClockChange = null;
   }
 
 
@@ -40,6 +41,9 @@ class Clock {
     if( timeString != this._lastTimeString ){
         this.displayTime( timeString );
         this._lastTimeString = timeString;
+        if( this.onClockChange ){
+          this.onClockChange();
+        }
     }
     now = null;
 
