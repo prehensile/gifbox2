@@ -1,1 +1,3 @@
 media/*
+config/dropbox_secret.json
+config/dropbox_client.json
