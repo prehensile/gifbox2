@@ -58,10 +58,23 @@ _CONFIG_KEY_DROPBOX_CONFIGURED = 'dropboxConfigured'
 
 def get_config( key=None ):
     global _CONFIG
+    
+    # if config hasn't been read from disk yet...
     if _CONFIG is None:
-        _CONFIG = utils.load_json( _PTH_CONFIG, default_content={} )
+        # ...read it
+        _CONFIG = utils.load_json( 
+            _PTH_CONFIG,
+            # by default, dropbox isn't configured
+            default_content={
+                _CONFIG_KEY_DROPBOX_CONFIGURED : False
+            }
+        )
+    
+    # if we've been asked for the value of a specific key, return that
     if key:
         return _CONFIG[ key ]
+    
+    # otherwise, return whole config
     return _CONFIG
 
 
@@ -174,7 +187,12 @@ def admin():
     c = get_config()
 
     url_dropbox_auth = None
-    if not c[ "dropboxConfigured" ]:
+    url_dropbox_deauth = None
+    if c[ _CONFIG_KEY_DROPBOX_CONFIGURED ]:
+        url_dropbox_deauth = url_for(
+            'dropbox_deauth'
+        )
+    else:
         url_dropbox_auth = url_for(
             'dropbox_auth_start'
         )
@@ -182,9 +200,21 @@ def admin():
     return render_template(
         'admin.html',
         url_dropbox_auth = url_dropbox_auth,
+        url_dropbox_deauth = url_dropbox_deauth,
         config = c
     )
 
+
+@app.route('/admin/dropbox/deauth')
+def dropbox_deauth():
+    
+    # stop updating from dropbox
+    _DB_CLIENT.stop()
+    
+    # write empty config
+    utils.dump_json( _PTH_DB_CLIENT_CONFIG, {} )
+    set_config( _CONFIG_KEY_DROPBOX_CONFIGURED, False )
+    return redirect( "admin" )
 
 
 ##
@@ -195,6 +225,7 @@ from dropbox import DropboxOAuth2Flow
 from dropbox.oauth import BadRequestException, BadStateException, CsrfException, NotApprovedException, ProviderException
 
 _PTH_DB_SECRET_CONFIG = "config/dropbox_secret.json"
+_PTH_DB_CLIENT_CONFIG = "config/dropbox_client.json"
 
 def get_dropbox_auth_flow():
     redirect_uri = url_for(
@@ -235,7 +266,7 @@ def dropbox_auth_finish():
     try:
         oauth_result = get_dropbox_auth_flow().finish(request.args)
         utils.dump_json(
-            "config/dropbox_client.json",
+            _PTH_DB_CLIENT_CONFIG,
             {
                 _DB_KEY_ACCESS_TOKEN : oauth_result.access_token,
                 "account_id" : oauth_result.account_id,
@@ -264,4 +295,3 @@ def dropbox_auth_finish():
         #logger.log("Auth error: %s" % (e,))
         print( "Auth error: %s" % (e,) )
         return handle_exception( e, 403 )
-    
