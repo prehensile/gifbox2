@@ -1,10 +1,12 @@
 import os
+import sys
 import datetime
 import logging
 import threading
 import time
 
 import dropbox
+import dropbox.files
 
 
 class DropboxClient( object ):
@@ -31,18 +33,65 @@ class DropboxClient( object ):
         )
 
 
-    def download_file( self, file_metadata ):
+    def _download_file( self, file_metadata ):
         """
         Download the Dropbox file specified by file_metadata
         Local path is inferred using _local_path_for_metadata().
         """
         # TODO: queue this
         local_path = self._local_path_for_metadata( file_metadata )
-        print( "Will download {} to {}".format( file_metadata.path_lower, local_path ) )
+        logging.debug( "Will download {} to {}".format( file_metadata.path_lower, local_path ) )
         self._dbx.files_download_to_file(
             local_path,
             file_metadata.id
         )
+
+
+    def _sync_with_list_folder_entries( self, entries ):
+        """
+        Synchronise local folder with one set of ListFolderResult.entries.
+        Will download anything with a newer copy on Dropbox, 
+        or delete anything which has been deleted on Dropbox.
+        """
+        
+        # step through remote file metadata entries
+        for file_metadata in entries:
+             
+            # this entry is file metadata
+            if isinstance( file_metadata, dropbox.files.FileMetadata ):
+
+                # by default, download files
+                should_download_file = True
+                
+                # get possible local path for remote file
+                local_path = self._local_path_for_metadata( file_metadata )
+                
+                # if this path already exists locally...
+                if os.path.exists( local_path ):
+
+                    # get last modification date for local file
+                    s = os.stat( local_path )
+                    dt_local = datetime.datetime.fromtimestamp( s.st_mtime )
+
+                    # if remote file is older, or the same age as local file...
+                    if file_metadata.server_modified <= dt_local:
+                        # ..don't download it
+                        should_download_file = False
+
+                if should_download_file:
+                    self._download_file( file_metadata )
+            
+
+            # this is a deleted entry
+            elif isinstance( file_metadata, dropbox.files.DeletedMetadata ):
+                
+                # get local path for remote file
+                local_path = self._local_path_for_metadata( file_metadata )
+
+                # delete it, if it exists
+                if os.path.exists( local_path ):
+                    logging.debug( "Will delete file at path: %s", local_path )
+                    os.remove( local_path )
 
 
     def sync_from_server( self ):
@@ -51,34 +100,11 @@ class DropboxClient( object ):
         Downloads all files that don't exist locally, or are newer than local equivalents.
         """
 
-        # TODO: remove deleted files
-
-        # list all remote files
-        resp = self._dbx.files_list_folder( self._media_path_remote )
+        # list all remote files. include delete entries so we can delete them locally, if needs be.
+        resp = self._dbx.files_list_folder( self._media_path_remote, include_deleted=True )
         
-        # step through remote files
-        for file_metadata in resp.entries:
-            
-            # by default, download files
-            should_download_file = True
-            
-            # get possible local path for remote file
-            local_path = self._local_path_for_metadata( file_metadata )
-            
-            # if this path already exists locally...
-            if os.path.exists( local_path ):
-
-                # get last modification date for local file
-                s = os.stat( local_path )
-                dt_local = datetime.datetime.fromtimestamp( s.st_mtime )
-
-                # if remote file is older, or the same age as local file...
-                if file_metadata.server_modified <= dt_local:
-                    # ..don't download it
-                    should_download_file = False
-
-            if should_download_file:
-                self.download_file( file_metadata )
+        # sync local folder with remote listing
+        self._sync_with_list_folder_entries( resp.entries )
         
         # return cursor from initial listing so we could e.g. use it for getting updates
         return resp.cursor
@@ -126,14 +152,11 @@ class DropboxClient( object ):
             # if longpoll reports any changes...
             if longpoll_res.changes:
                 
-                # TODO: deal with deletions
-
                 # list changed files
                 list_res = self._dbx.files_list_folder_continue( cursor )
                 
-                # download changed files
-                for file_metadata in list_res.entries:
-                    self.download_file( file_metadata )
+                # sync changed files
+                self._sync_with_list_folder_entries( list_res.entries )
                 
                 # set cursor
                 cursor = list_res.cursor
@@ -167,6 +190,12 @@ class DropboxClient( object ):
 
 
 def main():
+
+    logger = logging.getLogger()
+    logger.setLevel( logging.DEBUG )
+    handler = logging.StreamHandler( sys.stdout )
+    logger.addHandler( handler )
+
     dbc = DropboxClient(
         access_token=os.getenv( 'DROPBOX_TOKEN' ),
         media_path_remote="/gifplayer/media",
