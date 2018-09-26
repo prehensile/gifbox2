@@ -35,7 +35,7 @@ def get_session_key():
     sc = None
     flask_config = utils.load_json( _PTH_FLASK_CONFIG, default_content={} )
     if _KEY_SESSION not in flask_config:
-        sc = "%r" % os.urandom(16)
+        sc = utils.random_string( 16 )
         utils.set_json(
             _PTH_FLASK_CONFIG,
             _KEY_SESSION,

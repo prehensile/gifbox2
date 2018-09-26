@@ -3,6 +3,11 @@ import json
 import logging
 import logging.handlers
 import sys
+from base64 import b64encode
+
+
+def random_string(length):
+    return b64encode( os.urandom(length) ).decode('utf-8')
 
 
 def load_json( path, default_content=None ):
