@@ -9,7 +9,7 @@
   <body>
     
     <div class="container">
-      
+
         <h1>gifbox preferences</h1>
 
       <!-- dropbox status -->
@@ -25,7 +25,7 @@
                 <a href="{{ url_dropbox_auth }}" class="btn btn-primary" role="button">Connect to Dropbox</a>
               {% else %}
                 <p>✅ gifbox is connected to Dropbox.</p>
-                <a href="{{ url_dropbox_deauth }}" class="btn btn-danger" role="button">Disconnect from Dropbox</a>
+                <a href="{{ url_dropbox_deauth }}" class="btn btn-warning" role="button">Disconnect from Dropbox</a>
               {% endif %}
             </div>
           </div>
@@ -41,11 +41,19 @@
             </div>
             <div class="card-body">
               <form>
-                <div class="form-group form-check">
-                  <input type="checkbox" class="form-check-input" id="chkEnableClock">
-                  <label class="form-check-label" for="chkEnableClock">Enable clock</label>
-                </div>
-                <button type="submit" class="btn btn-primary">Submit</button>
+                  <div class="form-check">
+                      <input class="form-check-input" type="radio" name="rdoOverlay" id="rdoOverlayNone" value="none" checked>
+                      <label class="form-check-label" for="rdoOverlayNone">No overlay</label>
+                    </div>
+                    <div class="form-check">
+                      <input class="form-check-input" type="radio" name="rdoOverlay" id="rdoOverlayClock" value="clock">
+                      <label class="form-check-label" for="rdoOverlayClock">Clock</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="rdoOverlay" id="rdoOverlayPng" value="png">
+                        <label class="form-check-label" for="rdoOverlayPng">PNG file</label>
+                      </div>
+                <button type="submit" class="btn btn-primary mt-3">Submit</button>
               </form>
             </div>
           </div>
