@@ -22,10 +22,10 @@
             <div class="card-body">
               {% if url_dropbox_auth %}
                 <p>⚠️ gifbox is <strong>not connected</strong> to a Dropbox account.</p>
-                <a href="{{ url_dropbox_auth }}" class="btn btn-primary" role="button">Connect to Dropbox</a>
+                <a href="{{ url_dropbox_auth }}" class="btn btn-primary" role="button">🔌Connect to Dropbox</a>
               {% else %}
                 <p>✅ gifbox is connected to Dropbox.</p>
-                <a href="{{ url_dropbox_deauth }}" class="btn btn-warning" role="button">Disconnect from Dropbox</a>
+                <a href="{{ url_dropbox_deauth }}" class="btn btn-warning" role="button">🚫Disconnect from Dropbox</a>
               {% endif %}
             </div>
           </div>
@@ -56,10 +56,10 @@
                     <div class="collapse" id="clpsPngFile">
                       <div class="form-group">
                           <label for="filePng">Upload a PNG file</label>
-                          <input type="file" class="form-control-file" id="filePng">
+                          <input type="file" class="form-control-file" id="fileOverlay" accept="image/png">
                         </div>
                     </div>
-                <button type="submit" id="btnSubmit" class="btn btn-primary mt-3">Submit</button>
+                <button type="submit" id="btnSubmit" class="btn btn-primary mt-3">👌Save preferences</button>
               </form>
             </div>
           </div>

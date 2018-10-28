@@ -20,17 +20,27 @@ const sendFormState = function(){
         state[ field['name'] ] = field['value'];
     }
 
-    console.log( state );
+    // upload png file, if necessary
+    let overlayVal = $("input[name=rdoOverlay]:checked").val();
+    if( overlayVal == "png" ){
 
-    /*
-    $.post(
-        "/api/admin/state",
-        state,
-        function(data){
-            console.log( data );
-        }
-    )*/
+        // cribbed from https://stackoverflow.com/questions/2320069/jquery-ajax-file-upload
+        var formData = new FormData();
+        formData.append('file', $('#fileOverlay')[0].files[0]);
 
+        $.ajax({
+            url : '/admin/files/upload',
+            type : 'POST',
+            data : formData,
+            processData: false,  // tell jQuery not to process the data
+            contentType: false,  // tell jQuery not to set contentType
+            success : function(data) {
+                console.log(data);
+            }
+        });
+    }
+
+    // send form state
     $.ajax({
         url: "/api/admin/state",
         method: 'POST',

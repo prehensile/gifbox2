@@ -1,5 +1,4 @@
 import os
-import sys
 import random
 import logging
 import atexit
@@ -8,9 +7,9 @@ import json
 from threading import Event
 
 from flask import Flask, jsonify, send_from_directory, url_for, redirect, session, render_template, request, Response
+from werkzeug.utils import secure_filename
 
 from flask_cors import CORS
-
 from flask_sockets import Sockets
 
 import gevent
@@ -101,9 +100,9 @@ def set_config( key, value ):
 #
 
 def media_dir():
-    media_path = os.environ.get( 'GIFBOX_MEDIA' )
-    media_path = os.path.realpath( media_path )
-    return media_path
+    return os.path.realpath(
+        os.environ.get( 'GIFBOX_MEDIA' )
+    )
 
 
 ##
@@ -252,6 +251,31 @@ def dropbox_deauth():
     return redirect( "admin" )
 
 
+def upload_dir():
+    return os.path.realpath(
+        os.environ.get( 'UPLOAD_DIRECTORY' )
+    )
+
+def allowed_file( filename ):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() == 'png'
+
+@app.route('/admin/files/upload', methods=['POST'])
+def upload_file():
+    file = request.files['file']
+    if file and allowed_file( file.filename ):
+        filename = secure_filename( file.filename )
+        file.save(
+            os.path.join(
+                upload_dir(),
+                filename
+            )
+        )
+        return redirect(
+            url_for('admin')
+        )
+
+
 @app.route( '/api/admin/state', methods=['POST'] )
 def admin_state():
     
@@ -268,7 +292,6 @@ def admin_state():
     return jsonify(
         state
     )
-
 
 
 ##
