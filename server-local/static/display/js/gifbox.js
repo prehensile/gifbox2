@@ -6,6 +6,7 @@ class GifBox {
   constructor(){
     this._clock = null;
     this._config = null;
+    this._wsClient = null;
   }
 
 
@@ -60,7 +61,7 @@ class GifBox {
     this.fitImageToContainer( nextImg );
 
     lastImg.parentNode.removeChild( lastImg );
-    nextImg.classList.remove( 'loading' );
+    nextImg.classList.remove( 'hidden' );
 
     nextImg.id = 'imgLast';
 
@@ -96,7 +97,7 @@ class GifBox {
     nextImg.id = "imgLoading";
     nextImg.src = src;
     nextImg.classList.add( 'fitWidth' );
-    nextImg.classList.add( 'loading' );
+    nextImg.classList.add( 'hidden' );  // hide until loaded
 
     let div = document.getElementById( "images" );
     div.appendChild( nextImg );
@@ -148,51 +149,75 @@ class GifBox {
     let thisRef = this;
     this._loadJson(
       '/api/config',
-      function( data ){
-        thisRef.onConfigLoaded( data, callback )
-      }
+      callback
     )
   }
   
 
-  onConfigLoaded( data, callback ) {
-    this._config = data;
-    if( callback ){
-      callback();
-    }
-  }
+  applyConfig( config ){
+    
+    console.log( config );
 
+    this._config = config;
 
-  initClock() {
-    if( this._config.showClock ){
+    const thisRef = this;
+
+    // set up clock
+    if( config.showClock ){
+    //if( true ){
+      
+      // clock should be on
       if( !this._clock ){
-        const c = new Clock( "images/clock/digit-" );
-        c.run();
-        this._clock = c;
+        this._clock = new Clock( "images/clock/digit-" );
       }
-    }  
+      this._clock.onClockChange = function(){
+        thisRef.loadNextImageData();
+      }
+      this._clock.run();
+      this._clock.show();
+    
+    } else {
+     
+      // clock should be off
+      if( this._clock ){
+        this._clock.onClockChange = null;
+        this._clock.stop();
+        this._clock.hide();
+      }
+    }
+
   }
+
 
   postIntro(){
-    
+    // debugger;
     const thisRef = this;
 
     // load config, then do the next thing
-    this.loadConfig( function(){
-      debugger;
-      thisRef.initClock();
-      thisRef._clock.onClockChange = function(){
-        console.log( "onClockChange" );
-        thisRef.loadNextImageData();
-      };
-      thisRef.loadNextImageData();
+    this.loadConfig( function(data){
+      thisRef.applyConfig( data );
     });
   }
+
+
+  connectSockets(){
+
+    this._wsClient = new WebSocketClient();
+    
+    const thisRef = this;
+    this._wsClient.onConfigReceived = function( config ){
+      thisRef.applyConfig( config );
+    }    
+
+    this._wsClient.connect( "localhost:5000" );  
+  }
+
 
   init(){
     
     // bootstrap gifbox
 
+    // fit default image to screen
     let img = document.getElementById("imgLast");
     this.fitImageToContainer( img );
 
@@ -201,6 +226,7 @@ class GifBox {
       thisRef.postIntro();
     },8000);
     
+    this.connectSockets();
   }
 
 }
@@ -211,4 +237,5 @@ window.onload = function() {
     const gifbox = new GifBox();
     gifbox.init();
 
+    window.gifbox = gifbox;
 }

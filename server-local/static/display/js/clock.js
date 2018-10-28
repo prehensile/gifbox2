@@ -4,13 +4,19 @@ class Clock {
     this._lastTimeString = "";
     this._imageRoot = imageRoot;
     this.onClockChange = null;
+    this._interval = null;
+  }
+
+
+  _clockElement(){
+    return document.getElementById( "clock" );
   }
 
 
   displayTime( digitString ){
     for (let i = 0; i < digitString.length; i++) {
         let ds = digitString[i];
-        let img = document.getElementById( "digit-" + i );
+        let img = document.getElementById( "img-" + i );
         img.src = this._imageRoot + ds + ".png"
     }
   }
@@ -23,15 +29,20 @@ class Clock {
 
   
   flicker(){
-    let clock = document.getElementById( "clock" );
+    let clock = this._clockElement
+    
     let op = clock.style.opacity;
     if( !op || op == "" ) op = 1.0;
     else op = parseFloat( op );
-    const jitter = 0.30;
+    
+    const o = 0.5;
+    clock.style.opacity = o + ((1.0-o)*Math.random());
+
+    /*const jitter = 0.30;
     op += -(jitter/2) + (Math.random()*jitter);
     if( op > 1.0 ) op = 1.0;
     if( op < 0.0 ) op = 0.0;
-    clock.style.opacity = op;
+    clock.style.opacity = op;*/
   }
 
 
@@ -52,14 +63,31 @@ class Clock {
 
 
   run(){
-
-    const clock = document.getElementById( "clock" );
-    clock.classList.remove( "loading" );
-
     const thisRef = this;
     this._interval = window.setInterval( function(){
         thisRef.update();
     }, 1000/12 );
+    this.update();
+  }
+
+
+  stop(){
+    if( this._interval ){
+      window.clearInterval( this._interval )
+      this._interval = null;
+    }
+  }
+
+
+  show(){
+    const clock = this._clockElement();
+    clock.classList.remove( "hidden" );
+  }
+
+
+  hide(){
+    const clock = this._clockElement();
+    clock.classList.add( "hidden" );
   }
 
 }

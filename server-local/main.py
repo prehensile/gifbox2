@@ -4,10 +4,16 @@ import random
 import logging
 import atexit
 import datetime
+import json
+from threading import Event
 
 from flask import Flask, jsonify, send_from_directory, url_for, redirect, session, render_template, request, Response
 
 from flask_cors import CORS
+
+from flask_sockets import Sockets
+
+import gevent
 
 import utils
 import dropboxclient
@@ -19,9 +25,12 @@ app = Flask(
     static_folder="static"
 )
 
+# init websockets
+sockets = Sockets(app)
+
 # init CORS
 CORS( app, resources={r"/api/*": {"origins": "*"}} )
-logging.getLogger('flask_cors').level = logging.DEBUG
+# logging.getLogger('flask_cors').level = logging.DEBUG
 
 # init logging
 utils.init_logging(
@@ -104,6 +113,7 @@ def media_dir():
 _DB_CLIENT = None
 _PTH_DB_CLIENT_CONFIG = "config/dropbox_client.json"
 _DB_KEY_ACCESS_TOKEN = "access_token"
+_USE_DROPBOX = os.environ.get( "USE_DROPBOX", "yes" ) == "yes"
 
 def init_dropbox():
     global _DB_CLIENT
@@ -116,10 +126,34 @@ def init_dropbox():
     )
     _DB_CLIENT.run()
 
-if get_config( _CONFIG_KEY_DROPBOX_CONFIGURED ):
+if get_config( _CONFIG_KEY_DROPBOX_CONFIGURED ) and _USE_DROPBOX:
     init_dropbox()
     atexit.register( _DB_CLIENT.stop )
 
+
+##
+# websockets
+#
+
+_CONFIG_CHANGED = Event()
+
+@sockets.route('/sockets')
+def socket( ws ):
+    while not ws.closed:
+        
+        message = None
+        with gevent.Timeout(0.5, False):
+            message = ws.receive()
+        
+        if message is not None:
+            logging.debug( "websocket message: %s", message )
+        
+        if _CONFIG_CHANGED.is_set():
+            logging.debug( "!! SEND NEW CONFIG" )
+            ws.send( json.dumps( get_config() ) )
+            _CONFIG_CHANGED.clear()
+    
+    logging.debug("end of socket")
 
 ## 
 # API routes
@@ -141,9 +175,10 @@ def next_media():
         since = datetime.datetime.fromisoformat(
             request.args[ 'since' ]
         )
-        new_files = _DB_CLIENT.files_since( since )
-        if len( new_files ) > 0:
-            next_file = new_files[0]
+        if _DB_CLIENT:
+            new_files = _DB_CLIENT.files_since( since )
+            if len( new_files ) > 0:
+                next_file = new_files[0]
 
     if next_file is None:
         all_files = os.listdir( media_dir() )
@@ -215,6 +250,25 @@ def dropbox_deauth():
     utils.dump_json( _PTH_DB_CLIENT_CONFIG, {} )
     set_config( _CONFIG_KEY_DROPBOX_CONFIGURED, False )
     return redirect( "admin" )
+
+
+@app.route( '/api/admin/state', methods=['POST'] )
+def admin_state():
+    
+    state = request.get_json()
+    
+    set_config(
+        'showClock',
+        state['rdoOverlay'] == 'clock' 
+    )
+
+    # set this flag so that the websocket connection to the client will send the new config
+    _CONFIG_CHANGED.set()
+
+    return jsonify(
+        state
+    )
+
 
 
 ##
@@ -295,3 +349,23 @@ def dropbox_auth_finish():
         #logger.log("Auth error: %s" % (e,))
         print( "Auth error: %s" % (e,) )
         return handle_exception( e, 403 )
+
+
+##
+# main
+#
+
+if __name__ == "__main__":
+    from gevent import pywsgi
+    from geventwebsocket.handler import WebSocketHandler
+    
+    port = int( os.environ.get( "FLASK_RUN_PORT", "5000" ) )
+    host = os.environ.get( "FLASK_RUN_HOST", "" )
+
+    server = pywsgi.WSGIServer(
+        (host, port),
+        app,
+        handler_class=WebSocketHandler
+    )
+    
+    server.serve_forever()
