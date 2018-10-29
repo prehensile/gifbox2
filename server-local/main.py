@@ -105,6 +105,12 @@ def media_dir():
     )
 
 
+def upload_dir():
+    return os.path.realpath(
+        os.environ.get( 'UPLOAD_DIRECTORY' )
+    )
+
+
 ##
 # dropbox client
 #
@@ -210,6 +216,13 @@ def get_media( media_file ):
         media_file
     )
 
+@app.route('/media/overlay/<media_file>')
+def get_overlay( overlay_file ):
+    return send_from_directory(
+        upload_dir(),
+        overlay_file
+    )
+
 
 ##
 # ADMIN ROUTES
@@ -251,11 +264,6 @@ def dropbox_deauth():
     return redirect( "admin" )
 
 
-def upload_dir():
-    return os.path.realpath(
-        os.environ.get( 'UPLOAD_DIRECTORY' )
-    )
-
 def allowed_file( filename ):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() == 'png'
@@ -281,10 +289,21 @@ def admin_state():
     
     state = request.get_json()
     
+    print( state )
+
     set_config(
         'showClock',
         state['rdoOverlay'] == 'clock' 
     )
+
+    fn_overlay = None
+
+    k_overlay = "fileOverlay"
+    if (k_overlay in state) and ( len(state[k_overlay])>1 ):
+        set_config(
+            'overlay',
+            state[k_overlay]
+        )
 
     # set this flag so that the websocket connection to the client will send the new config
     _CONFIG_CHANGED.set()
