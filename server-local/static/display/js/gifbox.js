@@ -7,6 +7,7 @@ class GifBox {
     this._clock = null;
     this._config = null;
     this._wsClient = null;
+    this._selfAdvance = null;  // if true, will advance from gif to gif automatically
   }
 
 
@@ -45,13 +46,32 @@ class GifBox {
   }
 
 
-  loadNextImage(){
+  loadNextImageAfterTimeout( timeout ){
     let thisRef = this;
-    setTimeout( function(){
+    this._advanceTimeout = setTimeout( function(){
         thisRef.loadNextImageData();
-    }, 8000 );
+        thisRef._advanceTimeout = null;
+    }, timeout );
   }
 
+  setSelfAdvance( selfAdvance ){
+    
+    console.log( "setSelfAdvance", selfAdvance );
+
+    // don't do anything if we don't need to
+    if( selfAdvance == this._selfAdvance ) return;
+
+    this._selfAdvance = selfAdvance;
+
+    if( selfAdvance ){
+      this.loadNextImageData();
+    } else {  
+      if( this._advanceTimeout ) {
+        clearTimeout( this._advanceTimeout );
+      }
+    }
+
+  }
 
   prepareLoadedImage(){
 
@@ -83,7 +103,11 @@ class GifBox {
 
   onNextImageLoaded(){
     this.prepareLoadedImage();
-    //this.loadNextImage();
+
+    if( this._selfAdvance ) {
+      this.loadNextImageAfterTimeout( 8000 );
+    }
+
     if( this._imageLoadedCallback ){
       this._imageLoadedCallback();
       this._imageLoadedCallback = null;
@@ -124,7 +148,7 @@ class GifBox {
 
 
   loadNextImageData(){
-    
+
     let thisRef = this;
     
     let params = null;
@@ -157,6 +181,7 @@ class GifBox {
   applyConfig( config ){
     
     console.log( config );
+    debugger;
 
     this._config = config;
 
@@ -170,9 +195,15 @@ class GifBox {
       if( !this._clock ){
         this._clock = new Clock( "images/clock/digit-" );
       }
+
+      // stop refreshing gifs with our own timer
+      this.setSelfAdvance( false );
+
+      // use displayed clock time change to refresh gifs
       this._clock.onClockChange = function(){
         thisRef.loadNextImageData();
       }
+
       this._clock.run();
       this._clock.show();
     
@@ -180,10 +211,16 @@ class GifBox {
      
       // clock should be off
       if( this._clock ){
+        
+        // remove callback to refresh gif on displayed time change
         this._clock.onClockChange = null;
+        
         this._clock.stop();
         this._clock.hide();
       }
+
+      // start refreshing gifs with our own timer
+      this.setSelfAdvance( true );
     }
 
   }
