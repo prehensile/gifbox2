@@ -1,6 +1,9 @@
-#screen -dmS gifbox ./run-all.sh
-## run-all will be executed by xinitrc
-#./run-all.sh &
-#startx
-cd ~/gifbox2
-./run-all.sh
+export GIFBOX_MEDIA=$GIFBOX_ROOT/media
+
+# check wifi is connected, run wifi-connect if not
+cd $GIFBOX_ROOT
+./check_wifi.sh
+
+screen -dm bash -c 'cd $GIFBOX_ROOT/server-local; ./run-server.sh; exec sh'
+## will invoke xinitrc.sh 
+startx -- -nocursor
