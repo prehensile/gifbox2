@@ -216,7 +216,7 @@ def get_media( media_file ):
         media_file
     )
 
-@app.route('/media/overlay/<media_file>')
+@app.route('/overlay/<overlay_file>')
 def get_overlay( overlay_file ):
     return send_from_directory(
         upload_dir(),
@@ -295,8 +295,6 @@ def admin_state():
         'showClock',
         state['rdoOverlay'] == 'clock' 
     )
-
-    fn_overlay = None
 
     k_overlay = "fileOverlay"
     if (k_overlay in state) and ( len(state[k_overlay])>1 ):
