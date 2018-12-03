@@ -40,7 +40,7 @@ class DropboxClient( object ):
         """
         # TODO: queue this
         local_path = self._local_path_for_metadata( file_metadata )
-        logging.debug( "Will download {} to {}".format( file_metadata.path_lower, local_path ) )
+        logging.debug( "Will download %s to %s", file_metadata.path_lower, local_path )
         self._dbx.files_download_to_file(
             local_path,
             file_metadata.id
