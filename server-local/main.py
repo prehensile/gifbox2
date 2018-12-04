@@ -302,6 +302,12 @@ def admin_state():
             'overlay',
             state[k_overlay]
         )
+    else:
+        set_config(
+            'overlay',
+            None
+        )
+
 
     # set this flag so that the websocket connection to the client will send the new config
     _CONFIG_CHANGED.set()
