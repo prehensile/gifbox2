@@ -244,10 +244,17 @@ def admin():
             'dropbox_auth_start'
         )
 
+    overlay_checked = "rdoOverlayNone"
+    if c['showClock']:
+        overlay_checked = "rdoOverlayClock"
+    elif c['overlay']:
+        overlay_checked = "rdoOverlayPng"
+
     return render_template(
         'admin.html',
         url_dropbox_auth = url_dropbox_auth,
         url_dropbox_deauth = url_dropbox_deauth,
+        overlay_checked = overlay_checked,
         config = c
     )
 
