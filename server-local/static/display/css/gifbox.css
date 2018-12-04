@@ -28,10 +28,13 @@ body {
     justify-content: center;
 }
 
-#clock {
+.absolute-block {
     position: absolute;
     width: 100%;
     height: 100%;
+}
+
+#clock {
     /* opacity: 0.8; */
 }
 
@@ -56,8 +59,5 @@ body {
 
 
 #images {
-    width: 100%;
-    height: 100%;
     overflow: hidden;
-    position: absolute;
 }
