@@ -56,8 +56,6 @@ class GifBox {
 
   setSelfAdvance( selfAdvance ){
     
-    console.log( "setSelfAdvance", selfAdvance );
-
     // don't do anything if we don't need to
     if( selfAdvance == this._selfAdvance ) return;
 
@@ -221,8 +219,27 @@ class GifBox {
 
       // start refreshing gifs with our own timer
       this.setSelfAdvance( true );
-    }
 
+      // load custom png overlay, if set
+      const overlay = document.getElementById( "overlay" );
+      if( config.overlay != null ){
+        
+        const urlImage = "/overlay/" + config.overlay;
+        console.log( urlImage );
+          
+        const imgOverlay = document.getElementById( "img-overlay" );
+
+        imgOverlay.src = urlImage;
+        overlay.classList.remove( "hidden" );
+
+        this.fitImageToContainer( imgOverlay );
+
+      } else {
+        
+        overlay.classList.remove( "hidden" );
+
+      }
+    }
   }
 
 
